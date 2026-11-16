@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f766e">
+<title>Nostra CoPilot</title>
+<style>
+:root{--bg:#f3f5f7;--card:#fff;--ink:#1d2433;--muted:#6b7280;--pri:#0f766e;--pri2:#14b8a6;--red:#dc2626;--line:#e8ebef;--a:#2563eb;--m:#db2777;--ok:#16a34a;--r:16px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:calc(90px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:10px;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;box-shadow:0 2px 10px rgba(15,118,110,.25)}
+header h1{flex:1;margin:0;font-size:18px;font-weight:700}
+.ib{width:38px;height:38px;border:0;border-radius:12px;background:rgba(255,255,255,.2);color:#fff;font-size:18px;cursor:pointer;display:grid;place-items:center}
+.ib.dark{background:#eef2f5;color:var(--ink)}
+main{max-width:640px;margin:0 auto;padding:16px}
+h2.hello{margin:4px 0 2px;font-size:22px}
+.sub{color:var(--muted);margin:0 0 16px;font-size:14px}
+.home{display:grid;gap:12px}
+.hcard{display:flex;align-items:center;gap:14px;width:100%;background:var(--card);border:0;border-radius:var(--r);padding:16px;text-align:left;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06);color:inherit;font:inherit}
+.hcard .ico{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-size:26px;flex:none}
+.hcard .lbl{font-size:13px;color:var(--muted)}
+.hcard .val{display:block;font-size:20px;font-weight:700;margin-top:2px}
+.hcard .go{margin-left:auto;color:var(--muted);font-size:22px}
+.card{background:var(--card);border-radius:var(--r);padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px}
+.card h3{margin:4px 0 10px;font-size:16px}
+.month-nav{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:var(--r);padding:8px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.month-nav strong{font-size:16px}
+.grid-head,.row{display:grid;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.grid-head{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600;border-bottom:2px solid var(--line)}
+.dep{grid-template-columns:1fr auto 32px}
+.infl{grid-template-columns:1.4fr 1fr 36px 1fr 30px}
+.cell-name{display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;min-width:0}
+.cell-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cell-amt{text-align:right;font-variant-numeric:tabular-nums;cursor:pointer;font-weight:600;white-space:nowrap}
+.x{width:30px;height:30px;border:0;border-radius:50%;background:transparent;color:var(--red);font-weight:700;cursor:pointer;font-size:13px;padding:0}
+.badge{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;color:#fff;font-size:12px;font-weight:700;flex:none}
+.badge.a{background:var(--a)}
+.badge.m{background:var(--m)}
+.chk{width:36px;height:36px;border:0;background:none;font-size:22px;cursor:pointer;color:var(--muted);padding:0}
+.chk.on{color:var(--ok)}
+.reste{color:#b45309}
+.reste.zero{color:var(--ok)}
+.add-line{margin-top:10px;width:100%;padding:12px;border:2px dashed #cbd5e1;background:none;border-radius:12px;color:var(--pri);font-weight:600;cursor:pointer}
+.total{display:flex;justify-content:space-between;align-items:center;background:var(--pri);color:#fff;border-radius:var(--r);padding:14px 16px;margin-bottom:14px;font-size:15px}
+.total strong{font-size:18px}
+.table-wrap{overflow-x:auto}
+table.ann{width:100%;border-collapse:collapse;font-size:13px}
+.ann th,.ann td{padding:8px 4px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.ann th:first-child,.ann td:first-child{text-align:left}
+.ann tr.cur td{background:#ecfdf5;font-weight:600}
+.ann tfoot th{border-top:2px solid var(--line)}
+.fab{position:fixed;right:18px;bottom:calc(96px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;border:0;background:var(--pri);color:#fff;font-size:28px;box-shadow:0 6px 18px rgba(15,118,110,.4);cursor:pointer;z-index:8}
+.tabbar{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-around;background:#fff;border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:9}
+.tabbar button{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);padding:6px 0;cursor:pointer;border-radius:12px;font-family:inherit}
+.tabbar .i{font-size:22px}
+.tabbar button.on{color:var(--pri);font-weight:700;background:#ecfdf5}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.modal.open{display:flex}
+.sheet{background:#fff;width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:16px 18px calc(18px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto;animation:up .22s ease}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sheet-head h2{margin:0;font-size:18px}
+.field{margin-bottom:14px}
+.field label,.field .lab{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600}
+.field input,.field select{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:12px;font-size:16px;background:#fff;font-family:inherit}
+.payeur-group{display:flex;gap:8px;flex-wrap:wrap}
+.payeur-group button{flex:1;min-width:90px;padding:11px;border:2px solid #e5e7eb;border-radius:12px;background:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit}
+.payeur-group button.sel{border-color:var(--pri);background:#ecfdf5;font-weight:700}
+.btn-primary{width:100%;padding:14px;border:0;border-radius:14px;background:var(--pri);color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px;font-family:inherit}
+.btn-danger{width:100%;padding:12px;border:0;border-radius:14px;background:#fee2e2;color:var(--red);font-weight:700;margin-top:10px;cursor:pointer;font-family:inherit}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);background:#111827;color:#fff;padding:10px 16px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;z-index:30;font-size:14px;max-width:90%;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.inv{background:#fff;border-radius:var(--r);padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.inv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;cursor:pointer}
+.inv-head small{display:block;color:var(--muted);margin-top:2px}
+.inv-amts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0;text-align:center;font-size:12px;color:var(--muted)}
+.inv-amts b{display:block;color:var(--ink);font-size:14px;margin-top:2px}
+.chips{display:flex;gap:8px}
+.chip{flex:1;padding:9px;border-radius:999px;border:1px solid #d1d5db;background:#fff;font-size:13px;cursor:pointer;font-family:inherit}
+.chip.on{background:#dbeafe;border-color:#93c5fd;color:#1e40af;font-weight:600}
+.chip.on.ok{background:#dcfce7;border-color:#86efac;color:#166534}
+.login{margin-top:40px;text-align:center}
+.login form{display:grid;gap:10px;margin-top:16px}
+.login input{padding:13px;border:1px solid #d1d5db;border-radius:12px;font-size:16px;font-family:inherit}
+.logo{font-size:44px}
+.empty{color:var(--muted);text-align:center;padding:14px}
+</style>
+</head>
+<body>
+
+<header>
+  <button id="back" class="ib" data-act="back" aria-label="Retour" hidden>‹</button>
+  <h1 id="title">Nostra CoPilot</h1>
+  <button id="logout" class="ib" data-act="logout" aria-label="Déconnexion" hidden>⎋</button>
+</header>
+
+<main id="main"></main>
+
+<nav id="tabbar" class="tabbar" hidden>
+  <button data-act="nav" data-id="home"><span class="i">🏠</span>Accueil</button>
+  <button data-act="nav" data-id="depenses"><span class="i">💸</span>Dépenses</button>
+  <button data-act="nav" data-id="influence"><span class="i">🤝</span>Influence</button>
+  <button data-act="nav" data-id="artemis"><span class="i">🧾</span>Artemis DL</button>
+</nav>
+
+<div id="modal" class="modal"></div>
+<div id="toast" class="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDhHP87nEP3_KlYnheJ5Qt-JcMKc2C4JxQ",
+  authDomain: "artemis-d9175.firebaseapp.com",
+  databaseURL: "https://artemis-d9175-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "artemis-d9175",
+  storageBucket: "artemis-d9175.firebasestorage.app",
+  messagingSenderId: "89751197725",
+  appId: "1:89751197725:web:d91d282b1ff31433ac4ef4"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+/* ---------- Utilitaires ---------- */
+const MOIS_NOMS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const TITRES = {home:'Nostra CoPilot', depenses:'💸 Dépenses', influence:'🤝 Influence', artemis:'🧾 Artemis DL'};
+const pad = n => String(n).padStart(2,'0');
+const moisCourant = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}`; };
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+function decalerMois(m, delta){ const [y,mo] = m.split('-').map(Number); const d = new Date(y, mo-1+delta, 1); return `${d.getFullYear()}-${pad(d.getMonth()+1)}`; }
+function labelMois(m){ const [y,mo] = m.split('-'); return `${MOIS_NOMS[+mo-1]} ${y}`; }
+const fmt = n => `${((Math.round((Number(n)||0)*1000))/1000).toLocaleString('fr-FR',{minimumFractionDigits:3,maximumFractionDigits:3})} DT`;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function parseNum(s){ const n = parseFloat(String(s).replace(',', '.')); return isNaN(n) ? '' : n; }
+function badge(p){ return p==='A' ? '<span class="badge a">A</span>' : p==='M' ? '<span class="badge m">M</span>' : ''; }
+let toastT;
+function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 2600); }
+
+/* ---------- État ---------- */
+const state = { user:null, loaded:false, view:'home', mois:moisCourant(), data:normaliser(null) };
+let listening = false;
+function normaliser(v){
+  v = v || {};
+  return { chargesFixes: v.chargesFixes||{}, depenses: v.depenses||{}, influence: v.influence||{}, artemis: v.artemis||{} };
+}
+/* Écriture groupée à partir de la racine "nostra" */
+const maj = obj => db.ref('nostra').update(obj);
+
+/* ---------- Calculs ---------- */
+function listFixes(){
+  return Object.entries(state.data.chargesFixes)
+    .map(([id,v]) => ({id, nom:v.nom||'', ordre:v.ordre ?? 0}))
+    .sort((a,b) => a.ordre - b.ordre || a.nom.localeCompare(b.nom));
+}
+/* Montant d'une charge fixe pour un mois : on reprend la dernière valeur connue */
+function valeurFixe(k, m){
+  const mois = Object.keys(state.data.depenses).filter(x => x <= m).sort().reverse();
+  for (const x of mois){
+    const v = state.data.depenses[x]?.fixes?.[k];
+    if (v) return { montant: Number(v.montant)||0, payeur: v.payeur||'' };
+  }
+  return { montant:0, payeur:'' };
+}
+function listExtras(m){ return Object.entries(state.data.depenses[m]?.extras||{}).map(([id,v]) => ({id, ...v})); }
+function totalFixes(m){ return listFixes().reduce((s,f) => s + valeurFixe(f.id, m).montant, 0); }
+function totalExtras(m){ return listExtras(m).reduce((s,e) => s + (Number(e.montant)||0), 0); }
+function totalDepenses(m){ return totalFixes(m) + totalExtras(m); }
+function listInfl(m){ return Object.entries(state.data.influence[m]||{}).map(([id,v]) => ({id, ...v})); }
+function resteInfl(i){ return Math.max(0, (Number(i.montant)||0) - (Number(i.verse)||0)); }
+function listArt(){ return Object.entries(state.data.artemis).map(([id,v]) => ({id, ...v})).sort((a,b) => (b.date||'').localeCompare(a.date||'')); }
+function tvaArt(a){ return (Number(a.ht)||0) * (Number(a.taux)||0) / 100; }
+
+/* ---------- Firebase : connexion et écoute ---------- */
+auth.onAuthStateChanged(u => {
+  state.user = u;
+  if (u) {
+    startListeners();
+  } else {
+    db.ref('nostra').off();
+    listening = false;
+    state.loaded = false;
+    state.data = normaliser(null);
+    state.view = 'home';
+  }
+  render();
+});
+
+function startListeners(){
+  if (listening) return;
+  listening = true;
+  db.ref('nostra').on('value', snap => {
+    state.data = normaliser(snap.val());
+    state.loaded = true;
+    render();
+  }, () => toast('Accès refusé : vérifiez que les règles Firebase sont publiées.'));
+
+  /* Charges fixes de départ, créées une seule fois */
+  db.ref('nostra/seeded').transaction(cur => cur ? undefined : true)
+    .then(r => { if (r.committed) seed(); })
+    .catch(() => {});
+}
+function seed(){
+  const ref = db.ref('nostra/chargesFixes');
+  const up = {};
+  ['Loyer','SONED','STEG','Femme de ménage','BTS'].forEach((nom, i) => { up[ref.push().key] = {nom, ordre:i}; });
+  ref.update(up);
+}
+
+/* ---------- Rendu ---------- */
+function render(){
+  const connecte = !!state.user;
+  document.getElementById('tabbar').hidden = !connecte;
+  document.getElementById('logout').hidden = !connecte;
+  document.getElementById('back').hidden = !connecte || state.view === 'home';
+  document.getElementById('title').textContent = TITRES[state.view] || 'Nostra CoPilot';
+  const main = document.getElementById('main');
+  if (!connecte){ main.innerHTML = viewLogin(); return; }
+  if (!state.loaded){ main.innerHTML = '<p class="empty">Chargement…</p>'; return; }
+  main.innerHTML = VIEWS[state.view]();
+  document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.id === state.view));
+}
+const VIEWS = { home:()=>viewHome(), depenses:()=>viewDepenses(), influence:()=>viewInfluence(), artemis:()=>viewArtemis() };
+
+function viewLogin(){
+  return `<div class="card login"><div class="logo">🧭</div><h2 class="hello">Nostra CoPilot</h2>
+  <p class="sub">Connectez-vous pour accéder à vos données</p>
+  <form id="login-form">
+    <input name="email" type="email" placeholder="E-mail" required autocomplete="username">
+    <input name="password" type="password" placeholder="Mot de passe" required autocomplete="current-password">
+    <button class="btn-primary" type="submit">Se connecter</button>
+  </form></div>`;
+}
+
+function homeCard(ico, lbl, val, id, bg){
+  return `<button class="hcard" data-act="nav" data-id="${id}">
+    <span class="ico" style="background:${bg}">${ico}</span>
+    <span><span class="lbl">${lbl}</span><span class="val">${val}</span></span>
+    <span class="go">›</span></button>`;
+}
+function viewHome(){
+  const c = moisCourant();
+  const reste = listInfl(c).reduce((s,i) => s + resteInfl(i), 0);
+  const tva = listArt().reduce((s,a) => s + tvaArt(a), 0);
+  return `<h2 class="hello">Bonjour 👋</h2>
+  <p class="sub">${labelMois(c)} · Votre espace commun</p>
+  <div class="home">
+    ${homeCard('💸','Dépenses du mois', fmt(totalDepenses(c)), 'depenses', '#ecfdf5')}
+    ${homeCard('🤝','Reste à payer (Influence)', fmt(reste), 'influence', '#fff7ed')}
+    ${homeCard('🧾','TVA cumulée (Artemis DL)', fmt(tva), 'artemis', '#eff6ff')}
+  </div>`;
+}
+
+function monthNav(m){
+  return `<div class="month-nav">
+    <button class="ib dark" data-act="mois" data-d="-1" aria-label="Mois précédent">‹</button>
+    <strong>${labelMois(m)}</strong>
+    <button class="ib dark" data-act="mois" data-d="1" aria-label="Mois suivant">›</button>
+  </div>`;
+}
+function fab(act){ return `<button class="fab" data-act="${act}" aria-label="Ajouter">＋</button>`; }
+
+/* Tableau annuel : une ligne par mois de l'année, jusqu'au mois en cours */
+function tableauAnnuel(m, cols){
+  const y = m.slice(0,4), cur = moisCourant();
+  const sums = cols.map(() => 0);
+  const lignes = [];
+  for (let i = 1; i <= 12; i++){
+    const k = `${y}-${pad(i)}`;
+    const futur = k > cur;
+    const vals = cols.map(c => futur ? null : c.fn(k));
+    vals.forEach((v,j) => { if (v !== null) sums[j] += v; });
+    lignes.push(`<tr class="${k===m?'cur':''}"><td>${MOIS_NOMS[i-1]}</td>${vals.map(v => `<td>${v===null?'—':fmt(v)}</td>`).join('')}</tr>`);
+  }
+  return `<div class="card"><h3>Bilan ${y}</h3><div class="table-wrap"><table class="ann">
+    <thead><tr><th>Mois</th>${cols.map(c => `<th>${c.label}</th>`).join('')}</tr></thead>
+    <tbody>${lignes.join('')}</tbody>
+    <tfoot><tr><th>Total</th>${sums.map(s => `<th>${fmt(s)}</th>`).join('')}</tr></tfoot>
+  </table></div></div>`;
+}
+
+/* Onglet 1 : Dépenses */
+function rowDep(d){
+  const ds = `data-act="editDep" data-id="${esc(d.id)}" data-kind="${d.kind}"`;
+  return `<div class="row dep">
+    <div class="cell-name" ${ds}><span>${esc(d.nom)}</span>${badge(d.payeur)}</div>
+    <div class="cell-amt" ${ds}>${fmt(d.montant)}</div>
+    <button class="x" data-act="delDep" data-id="${esc(d.id)}" data-kind="${d.kind}" aria-label="Supprimer">✕</button>
+  </div>`;
+}
+function viewDepenses(){
+  const m = state.mois;
+  const fixes = listFixes().map(f => { const v = valeurFixe(f.id, m); return {id:f.id, nom:f.nom, montant:v.montant, payeur:v.payeur, kind:'fixe'}; });
+  const extras = listExtras(m).map(e => ({id:e.id, nom:e.nom, montant:e.montant, payeur:e.payeur, kind:'extra'}));
+  return monthNav(m) + `
+  <div class="card">
+    <div class="grid-head dep"><span>Nom de la dépense</span><span>Montant</span><span></span></div>
+    ${fixes.map(rowDep).join('')}
+    ${extras.map(rowDep).join('')}
+    <button class="add-line" data-act="addFixe">＋ Ajouter une charge fixe</button>
+  </div>
+  <div class="total"><span>Total ${labelMois(m)}</span><strong>${fmt(totalDepenses(m))}</strong></div>
+  ${tableauAnnuel(m, [{label:'Dépenses', fn:k => totalDepenses(k)}])}
+  ${fab('addDep')}`;
+}
+
+/* Onglet 2 : Influence */
+function viewInfluence(){
+  const m = state.mois;
+  const items = listInfl(m);
+  const rows = items.map(i => {
+    const paid = Number(i.montant) > 0 && Number(i.verse) >= Number(i.montant);
+    const ds = `data-act="editInfl" data-id="${esc(i.id)}"`;
+    return `<div class="row infl">
+      <div class="cell-name" ${ds}><span>${esc(i.projet)}</span></div>
+      <div class="cell-amt" ${ds}>${fmt(i.montant)}</div>
+      <button class="chk ${paid?'on':''}" data-act="toggleInfl" data-id="${esc(i.id)}" aria-label="Payé">${paid?'☑':'☐'}</button>
+      <div class="cell-amt reste ${paid?'zero':''}" ${ds}>${fmt(resteInfl(i))}</div>
+      <button class="x" data-act="delInfl" data-id="${esc(i.id)}" aria-label="Supprimer">✕</button>
+    </div>`;
+  }).join('') || '<p class="empty">Aucun projet pour ce mois-ci.</p>';
+  const totalMontant = items.reduce((s,i) => s + (Number(i.montant)||0), 0);
+  const totalReste = items.reduce((s,i) => s + resteInfl(i), 0);
+  return monthNav(m) + `
+  <div class="card">
+    <div class="grid-head infl"><span>Projet</span><span>Montant</span><span>Payé</span><span>Reste</span><span></span></div>
+    ${rows}
+  </div>
+  <div class="total"><span>Reste à payer ${labelMois(m)}</span><strong>${fmt(totalReste)}</strong></div>
+  <div class="total" style="background:#334155"><span>Montant total ${labelMois(m)}</span><strong>${fmt(totalMontant)}</strong></div>
+  ${tableauAnnuel(m, [
+    {label:'Montant', fn:k => listInfl(k).reduce((s,i) => s + (Number(i.montant)||0), 0)},
+    {label:'Reste', fn:k => listInfl(k).reduce((s,i) => s + resteInfl(i), 0)}
+  ])}
+  ${fab('addInfl')}`;
+}
+
+/* Onglet 3 : Artemis DL */
+function viewArtemis(){
+  const arts = listArt();
+  const tvaTotale = arts.reduce((s,a) => s + tvaArt(a), 0);
+  const cards = arts.map(a => {
+    const tva = tvaArt(a);
+    const ttc = (Number(a.ht)||0) + tva;
+    const id = esc(a.id);
+    return `<div class="inv">
+      <div class="inv-head" data-act="editArt" data-id="${id}">
+        <div><strong>${esc(a.client||'Sans nom')}</strong><small>${esc(a.numero||'')}${a.date ? ' · ' + esc(a.date) : ''}</small></div>
+        <button class="x" data-act="delArt" data-id="${id}" aria-label="Supprimer">✕</button>
+      </div>
+      <div class="inv-amts">
+        <span>HT<b>${fmt(a.ht)}</b></span>
+        <span>TVA ${esc(a.taux)} %<b>${fmt(tva)}</b></span>
+        <span>TTC<b>${fmt(ttc)}</b></span>
+      </div>
+      <div class="chips">
+        <button class="chip ${a.envoyee?'on':''}" data-act="toggleArt" data-id="${id}" data-champ="envoyee">📤 ${a.envoyee?'Envoyée':'Non envoyée'}</button>
+        <button class="chip ${a.payee?'on ok':''}" data-act="toggleArt" data-id="${id}" data-champ="payee">💰 ${a.payee?'Payée':'Non payée'}</button>
+      </div>
+    </div>`;
+  }).join('') || '<p class="empty">Aucune facture pour le moment.</p>';
+  return `<div class="total"><span>TVA cumulée</span><strong>${fmt(tvaTotale)}</strong></div>
+  ${cards}
+  ${fab('addArt')}`;
+}
+
+/* ---------- Formulaires (fenêtre modale) ---------- */
+let currentForm = null;
+function fieldHtml(f){
+  const req = f.required ? ' required' : '';
+  if (f.type === 'payeur') return `<div class="field">
+    <span class="lab">${esc(f.label)}${f.required?' *':''}</span>
+    <div class="payeur-group">
+      <button type="button" data-val="A" class="${f.value==='A'?'sel':''}"><span class="badge a">A</span> Amine</button>
+      <button type="button" data-val="M" class="${f.value==='M'?'sel':''}"><span class="badge m">M</span> Myriam</button>
+      ${f.required ? '' : `<button type="button" data-val="" class="${!f.value?'sel':''}">Aucun</button>`}
+    </div>
+    <input type="hidden" id="f-${f.name}" value="${esc(f.value||'')}">
+  </div>`;
+  if (f.type === 'select') return `<div class="field">
+    <label for="f-${f.name}">${esc(f.label)}</label>
+    <select id="f-${f.name}">${f.options.map(o => `<option value="${esc(o.v)}" ${String(o.v)===String(f.value)?'selected':''}>${esc(o.l)}</option>`).join('')}</select>
+  </div>`;
+  const numAttr = f.type === 'number' ? ' inputmode="decimal" step="0.001" min="0"' : '';
+  return `<div class="field">
+    <label for="f-${f.name}">${esc(f.label)}${f.required?' *':''}</label>
+    <input id="f-${f.name}" type="${f.type||'text'}" value="${esc(f.value ?? '')}"${numAttr}${req}>
+  </div>`;
+}
+function openForm(cfg){
+  currentForm = cfg;
+  const modal = document.getElementById('modal');
+  modal.innerHTML = `<div class="sheet" role="dialog">
+    <div class="sheet-head"><h2>${esc(cfg.title)}</h2>
+      <button type="button" class="ib dark" data-act="closeModal" aria-label="Fermer">✕</button></div>
+    <form id="f" novalidate>
+      ${cfg.fields.map(fieldHtml).join('')}
+      <button class="btn-primary" type="submit">${esc(cfg.submit || 'Enregistrer')}</button>
+      ${cfg.onDelete ? '<button type="button" class="btn-danger" data-act="formDelete">Supprimer</button>' : ''}
+    </form></div>`;
+  modal.classList.add('open');
+  modal.querySelectorAll('.payeur-group').forEach(g => g.addEventListener('click', ev => {
+    const b = ev.target.closest('button[data-val]');
+    if (!b) return;
+    g.querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b));
+    g.parentElement.querySelector('input[type=hidden]').value = b.dataset.val;
+  }));
+}
+function closeModal(){
+  document.getElementById('modal').classList.remove('open');
+  currentForm = null;
+}
+function submitForm(){
+  const cfg = currentForm;
+  if (!cfg) return;
+  const vals = {};
+  let ok = true;
+  cfg.fields.forEach(f => {
+    const el = document.getElementById('f-' + f.name);
+    const v = f.type === 'number' ? parseNum(el.value) : el.value.trim();
+    if (f.required && (v === '' || v === null)) ok = false;
+    vals[f.name] = v;
+  });
+  if (!ok){ toast('Merci de remplir les champs obligatoires'); return; }
+  cfg.onSubmit(vals);
+  closeModal();
+}
+
+/* Dépense ponctuelle (Dépenses) */
+function formDepense(id){
+  const m = state.mois;
+  const ex = id ? state.data.depenses[m]?.extras?.[id] : null;
+  openForm({
+    title: id ? 'Modifier la dépense' : 'Nouvelle dépense',
+    submit: id ? 'Enregistrer' : 'Ajouter',
+    fields: [
+      {name:'nom', label:'Nom de la dépense', required:true, value: ex?.nom || ''},
+      {name:'montant', label:'Montant (DT)', type:'number', required:true, value: ex?.montant ?? ''},
+      {name:'payeur', label:'Qui a fait la dépense ?', type:'payeur', required:true, value: ex?.payeur || ''}
+    ],
+    onSubmit: v => {
+      const key = id || db.ref(`nostra/depenses/${m}/extras`).push().key;
+      maj({[`depenses/${m}/extras/${key}`]: {nom:v.nom, montant:Number(v.montant)||0, payeur:v.payeur}});
+    },
+    onDelete: id ? () => supprExtra(id) : null
+  });
+}
+/* Charge fixe existante : montant du mois, payeur, nom */
+function formFixe(k){
+  const m = state.mois;
+  const f = state.data.chargesFixes[k] || {};
+  const v = valeurFixe(k, m);
+  openForm({
+    title: 'Charge fixe',
+    submit: 'Enregistrer',
+    fields: [
+      {name:'nom', label:'Nom', required:true, value: f.nom || ''},
+      {name:'montant', label:`Montant pour ${labelMois(m)} (DT)`, type:'number', value: v.montant},
+      {name:'payeur', label:'Qui paie ?', type:'payeur', value: v.payeur}
+    ],
+    onSubmit: vals => maj({
+      [`chargesFixes/${k}/nom`]: vals.nom,
+      [`depenses/${m}/fixes/${k}`]: {montant:Number(vals.montant)||0, payeur:vals.payeur||''}
+    }),
+    onDelete: () => supprFixe(k)
+  });
+}
+/* Nouvelle charge fixe */
+function formFixeNouvelle(){
+  const m = state.mois;
+  openForm({
+    title: 'Nouvelle charge fixe',
+    submit: 'Ajouter',
+    fields: [
+      {name:'nom', label:'Nom de la charge', required:true, value:''},
+      {name:'montant', label:`Montant pour ${labelMois(m)} (DT)`, type:'number', value:''},
+      {name:'payeur', label:'Qui paie ?', type:'payeur', value:''}
+    ],
+    onSubmit: vals => {
+      const key = db.ref('nostra/chargesFixes').push().key;
+      maj({
+        [`chargesFixes/${key}`]: {nom:vals.nom, ordre:Date.now()},
+        [`depenses/${m}/fixes/${key}`]: {montant:Number(vals.montant)||0, payeur:vals.payeur||''}
+      });
+    }
+  });
+}
+function supprFixe(k){
+  if (!confirm('Supprimer cette charge fixe de tous les mois ?')) return;
+  const up = {[`chargesFixes/${k}`]: null};
+  Object.keys(state.data.depenses).forEach(mm => {
+    if (state.data.depenses[mm]?.fixes?.[k] !== undefined) up[`depenses/${mm}/fixes/${k}`] = null;
+  });
+  maj(up);
+  toast('Charge fixe supprimée');
+}
+function supprExtra(id){
+  if (!confirm('Supprimer cette dépense ?')) return;
+  maj({[`depenses/${state.mois}/extras/${id}`]: null});
+  toast('Dépense supprimée');
+}
+
+/* Projet Influence */
+function formInfl(id){
+  const m = state.mois;
+  const i = id ? state.data.influence[m]?.[id] : null;
+  openForm({
+    title: id ? 'Modifier le projet' : 'Nouveau projet',
+    submit: id ? 'Enregistrer' : 'Ajouter',
+    fields: [
+      {name:'projet', label:'Projet', required:true, value: i?.projet || ''},
+      {name:'montant', label:'Montant (DT)', type:'number', required:true, value: i?.montant ?? ''},
+      {name:'verse', label:'Déjà payé (DT)', type:'number', value: i?.verse ?? 0}
+    ],
+    onSubmit: v => {
+      const montant = Number(v.montant) || 0;
+      const key = id || db.ref(`nostra/influence/${m}`).push().key;
+      maj({[`influence/${m}/${key}`]: {projet:v.projet, montant, verse:Math.min(Number(v.verse)||0, montant)}});
+    },
+    onDelete: id ? () => supprInfl(id) : null
+  });
+}
+function toggleInfl(id){
+  const m = state.mois;
+  const i = state.data.influence[m]?.[id];
+  if (!i) return;
+  const paid = Number(i.montant) > 0 && Number(i.verse) >= Number(i.montant);
+  maj({[`influence/${m}/${id}/verse`]: paid ? 0 : (Number(i.montant)||0)});
+}
+function supprInfl(id){
+  if (!confirm('Supprimer ce projet ?')) return;
+  maj({[`influence/${state.mois}/${id}`]: null});
+  toast('Projet supprimé');
+}
+
+/* Facture Artemis DL */
+function formArt(id){
+  const a = id ? state.data.artemis[id] : null;
+  openForm({
+    title: id ? 'Modifier la facture' : 'Nouvelle facture',
+    submit: id ? 'Enregistrer' : 'Ajouter',
+    fields: [
+      {name:'client', label:'Client', required:true, value: a?.client || ''},
+      {name:'numero', label:'N° de facture', value: a?.numero || ''},
+      {name:'date', label:'Date', type:'date', value: a?.date || today()},
+      {name:'ht', label:'Montant HT (DT)', type:'number', required:true, value: a?.ht ?? ''},
+      {name:'taux', label:'Taux de TVA', type:'select', value: String(a?.taux ?? 19),
+        options:[{v:0,l:'0 %'},{v:7,l:'7 %'},{v:13,l:'13 %'},{v:19,l:'19 %'}]},
+      {name:'envoyee', label:'Facture envoyée ?', type:'select', value: a?.envoyee ? '1' : '0',
+        options:[{v:'0',l:'Non'},{v:'1',l:'Oui'}]},
+      {name:'payee', label:'Facture payée ?', type:'select', value: a?.payee ? '1' : '0',
+        options:[{v:'0',l:'Non'},{v:'1',l:'Oui'}]}
+    ],
+    onSubmit: v => {
+      const key = id || db.ref('nostra/artemis').push().key;
+      maj({[`artemis/${key}`]: {
+        client:v.client, numero:v.numero, date:v.date,
+        ht:Number(v.ht)||0, taux:Number(v.taux)||0,
+        envoyee: v.envoyee === '1', payee: v.payee === '1'
+      }});
+    },
+    onDelete: id ? () => supprArt(id) : null
+  });
+}
+function toggleArt(id, champ){
+  const a = state.data.artemis[id];
+  if (!a) return;
+  maj({[`artemis/${id}/${champ}`]: !a[champ]});
+}
+function supprArt(id){
+  if (!confirm('Supprimer cette facture ?')) return;
+  maj({[`artemis/${id}`]: null});
+  toast('Facture supprimée');
+}
+
+/* ---------- Actions (clics) ---------- */
+const actions = {
+  nav: ds => { state.view = ds.id; window.scrollTo(0,0); render(); },
+  back: () => { state.view = 'home'; render(); },
+  mois: ds => { state.mois = decalerMois(state.mois, +ds.d); render(); },
+  logout: () => auth.signOut(),
+  closeModal: () => closeModal(),
+  formDelete: () => { const c = currentForm; closeModal(); c?.onDelete?.(); },
+  addDep: () => formDepense(null),
+  editDep: ds => ds.kind === 'fixe' ? formFixe(ds.id) : formDepense(ds.id),
+  delDep: ds => ds.kind === 'fixe' ? supprFixe(ds.id) : supprExtra(ds.id),
+  addFixe: () => formFixeNouvelle(),
+  addInfl: () => formInfl(null),
+  editInfl: ds => formInfl(ds.id),
+  delInfl: ds => supprInfl(ds.id),
+  toggleInfl: ds => toggleInfl(ds.id),
+  addArt: () => formArt(null),
+  editArt: ds => formArt(ds.id),
+  delArt: ds => supprArt(ds.id),
+  toggleArt: ds => toggleArt(ds.id, ds.champ)
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const fn = actions[el.dataset.act];
+  if (fn){ e.preventDefault(); fn(el.dataset); }
+});
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeModal();
+});
+
+/* ---------- Formulaires : soumission ---------- */
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  if (e.target.id === 'login-form'){
+    const email = e.target.querySelector('[name=email]').value.trim();
+    const pass = e.target.querySelector('[name=password]').value;
+    auth.signInWithEmailAndPassword(email, pass).catch(err => {
+      const id = ['auth/invalid-credential','auth/wrong-password','auth/user-not-found','auth/invalid-email'];
+      toast(id.includes(err.code) ? 'E-mail ou mot de passe incorrect.' : 'Connexion impossible. Vérifiez votre connexion internet.');
+    });
+    return;
+  }
+  if (e.target.id === 'f') submitForm();
+});
+
+render();
+</script>
+</body>
+</html>
