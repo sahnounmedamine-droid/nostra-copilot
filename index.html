@@ -88,6 +88,13 @@ table.ann{width:100%;border-collapse:collapse;font-size:13px}
 .login input{padding:13px;border:1px solid #d1d5db;border-radius:12px;font-size:16px;font-family:inherit}
 .logo{font-size:44px}
 .empty{color:var(--muted);text-align:center;padding:14px}
+.row.fixe{background:#334155;color:#fff;border-bottom-color:transparent;border-radius:12px;margin:4px 0}
+.row.fixe .x{color:#fca5a5}
+.badge-fixe{display:inline-block;padding:2px 8px;border-radius:999px;background:#fff;color:#334155;font-size:11px;font-weight:700;flex:none}
+.row.fixe{padding:12px 14px}
+.grid-head.infl span:nth-child(n+2):nth-child(-n+4){text-align:center}
+.infl .cell-amt{text-align:center}
+.infl .chk{justify-self:center}
 </style>
 </head>
 <body>
@@ -246,7 +253,7 @@ function homeCard(ico, lbl, val, id, bg){
 function viewHome(){
   const c = moisCourant();
   const reste = listInfl(c).reduce((s,i) => s + resteInfl(i), 0);
-  const tva = listArt().reduce((s,a) => s + tvaArt(a), 0);
+  const tva = listArt().filter(a => a.payee).reduce((s,a) => s + tvaArt(a), 0);
   return `<h2 class="hello">Bonjour 👋</h2>
   <p class="sub">${labelMois(c)} · Votre espace commun</p>
   <div class="home">
@@ -287,8 +294,9 @@ function tableauAnnuel(m, cols){
 /* Onglet 1 : Dépenses */
 function rowDep(d){
   const ds = `data-act="editDep" data-id="${esc(d.id)}" data-kind="${d.kind}"`;
-  return `<div class="row dep">
-    <div class="cell-name" ${ds}><span>${esc(d.nom)}</span>${badge(d.payeur)}</div>
+  const fixe = d.kind === 'fixe';
+  return `<div class="row dep${fixe ? ' fixe' : ''}">
+    <div class="cell-name" ${ds}><span>${esc(d.nom)}</span>${fixe ? '<span class="badge-fixe">Fixe</span>' : ''}${badge(d.payeur)}</div>
     <div class="cell-amt" ${ds}>${fmt(d.montant)}</div>
     <button class="x" data-act="delDep" data-id="${esc(d.id)}" data-kind="${d.kind}" aria-label="Supprimer">✕</button>
   </div>`;
@@ -326,13 +334,15 @@ function viewInfluence(){
   }).join('') || '<p class="empty">Aucun projet pour ce mois-ci.</p>';
   const totalMontant = items.reduce((s,i) => s + (Number(i.montant)||0), 0);
   const totalReste = items.reduce((s,i) => s + resteInfl(i), 0);
+  const totalPaye = totalMontant - totalReste;
   return monthNav(m) + `
   <div class="card">
     <div class="grid-head infl"><span>Projet</span><span>Montant</span><span>Payé</span><span>Reste</span><span></span></div>
     ${rows}
   </div>
-  <div class="total"><span>Reste à payer ${labelMois(m)}</span><strong>${fmt(totalReste)}</strong></div>
-  <div class="total" style="background:#334155"><span>Montant total ${labelMois(m)}</span><strong>${fmt(totalMontant)}</strong></div>
+    <div class="total"><span>Reste à payer</span><strong>${fmt(totalReste)}</strong></div>
+  <div class="total" style="background:#334155"><span>Montant total payé</span><strong>${fmt(totalPaye)}</strong></div>
+  <div class="total" style="background:#334155"><span>Montant total</span><strong>${fmt(totalPaye + totalReste)}</strong></div>
   ${tableauAnnuel(m, [
     {label:'Montant', fn:k => listInfl(k).reduce((s,i) => s + (Number(i.montant)||0), 0)},
     {label:'Reste', fn:k => listInfl(k).reduce((s,i) => s + resteInfl(i), 0)}
@@ -343,7 +353,8 @@ function viewInfluence(){
 /* Onglet 3 : Artemis DL */
 function viewArtemis(){
   const arts = listArt();
-  const tvaTotale = arts.reduce((s,a) => s + tvaArt(a), 0);
+  const tvaTotale = arts.filter(a => a.payee).reduce((s,a) => s + tvaArt(a), 0);
+  const htEnvoye = arts.filter(a => a.envoyee).reduce((s,a) => s + (Number(a.ht)||0), 0);
   const cards = arts.map(a => {
     const tva = tvaArt(a);
     const ttc = (Number(a.ht)||0) + tva;
@@ -364,7 +375,8 @@ function viewArtemis(){
       </div>
     </div>`;
   }).join('') || '<p class="empty">Aucune facture pour le moment.</p>';
-  return `<div class="total"><span>TVA cumulée</span><strong>${fmt(tvaTotale)}</strong></div>
+  return `<div class="total"><span>TVA cumulée (factures payées)</span><strong>${fmt(tvaTotale)}</strong></div>
+  <div class="total" style="background:#334155"><span>Total facturé HT (factures envoyées)</span><strong>${fmt(htEnvoye)}</strong></div>
   ${cards}
   ${fab('addArt')}`;
 }
@@ -530,7 +542,19 @@ function toggleInfl(id){
   const i = state.data.influence[m]?.[id];
   if (!i) return;
   const paid = Number(i.montant) > 0 && Number(i.verse) >= Number(i.montant);
-  maj({[`influence/${m}/${id}/verse`]: paid ? 0 : (Number(i.montant)||0)});
+  if (paid){
+    /* Décocher : on revient au versement partiel mémorisé */
+    maj({
+      [`influence/${m}/${id}/verse`]: Number(i.avant)||0,
+      [`influence/${m}/${id}/avant`]: null
+    });
+  } else {
+    /* Cocher : on mémorise le versement actuel, puis on paie tout */
+    maj({
+      [`influence/${m}/${id}/avant`]: Number(i.verse)||0,
+      [`influence/${m}/${id}/verse`]: Number(i.montant)||0
+    });
+  }
 }
 function supprInfl(id){
   if (!confirm('Supprimer ce projet ?')) return;
