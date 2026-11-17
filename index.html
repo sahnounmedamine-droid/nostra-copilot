@@ -63,10 +63,12 @@ table.ann{width:100%;border-collapse:collapse;font-size:13px}
 .tabbar button.on{color:var(--pri);font-weight:700;background:#ecfdf5}
 .modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
 .modal.open{display:flex}
+#confirm{z-index:25}
 .sheet{background:#fff;width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:16px 18px calc(18px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto;animation:up .22s ease}
 @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
 .sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .sheet-head h2{margin:0;font-size:18px}
+.confirm-msg{font-size:15px;line-height:1.4;margin:0 0 6px}
 .field{margin-bottom:14px}
 .field label,.field .lab{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600}
 .field input,.field select{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:12px;font-size:16px;background:#fff;font-family:inherit}
@@ -75,6 +77,7 @@ table.ann{width:100%;border-collapse:collapse;font-size:13px}
 .payeur-group button.sel{border-color:var(--pri);background:#ecfdf5;font-weight:700}
 .btn-primary{width:100%;padding:14px;border:0;border-radius:14px;background:var(--pri);color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px;font-family:inherit}
 .btn-danger{width:100%;padding:12px;border:0;border-radius:14px;background:#fee2e2;color:var(--red);font-weight:700;margin-top:10px;cursor:pointer;font-family:inherit}
+.btn-cancel{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:14px;background:#fff;color:var(--ink);font-weight:700;margin-top:10px;cursor:pointer;font-family:inherit}
 .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);background:#111827;color:#fff;padding:10px 16px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;z-index:30;font-size:14px;max-width:90%;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%)}
 .inv{background:#fff;border-radius:var(--r);padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
@@ -98,11 +101,26 @@ table.ann{width:100%;border-collapse:collapse;font-size:13px}
 .grid-head.infl span:nth-child(n+2):nth-child(-n+4){text-align:center}
 .infl .cell-amt{text-align:center}
 .infl .chk{justify-self:center}
+
+/* ---------- Ajouts : menu, filtres, export, corbeille ---------- */
+.drawer{position:fixed;inset:0;z-index:40}
+.drawer-bg{position:absolute;inset:0;background:rgba(15,23,42,.45)}
+.drawer-panel{position:absolute;left:0;top:0;bottom:0;width:270px;max-width:80%;background:#fff;padding:calc(20px + env(safe-area-inset-top)) 16px 16px;display:flex;flex-direction:column;gap:10px;box-shadow:4px 0 18px rgba(0,0,0,.15);animation:gauche .2s ease}
+@keyframes gauche{from{transform:translateX(-30px);opacity:0}to{transform:none;opacity:1}}
+.drawer-title{margin:0 0 6px;font-size:18px}
+.menu-item{width:100%;padding:14px;border:0;background:#f3f5f7;border-radius:14px;text-align:left;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--ink)}
+.filtres input,.filtres select{width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:12px;font-size:16px;font-family:inherit;background:#fff;margin-bottom:8px}
+.filtres .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.filtres .row2 select{margin-bottom:0}
+.filtres input:last-child,.filtres .row2:last-child{margin-bottom:0}
+.export-bar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.btn-export{padding:12px;border:0;border-radius:14px;background:#fff;color:var(--pri);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer;font-family:inherit}
 </style>
 </head>
 <body>
 
 <header>
+  <button id="menu" class="ib" data-act="openMenu" aria-label="Menu" hidden>☰</button>
   <button id="back" class="ib" data-act="back" aria-label="Retour" hidden>‹</button>
   <h1 id="title">Nostra CoPilot</h1>
   <button id="logout" class="ib" data-act="logout" aria-label="Déconnexion" hidden>⎋</button>
@@ -117,7 +135,20 @@ table.ann{width:100%;border-collapse:collapse;font-size:13px}
   <button data-act="nav" data-id="artemis"><span class="i">🧾</span>Artemis DL</button>
 </nav>
 
+<div id="drawer" class="drawer" hidden>
+  <div class="drawer-bg" data-act="closeMenu"></div>
+  <aside class="drawer-panel">
+    <h2 class="drawer-title">Menu</h2>
+    <button class="menu-item" data-act="sauvegarde">💾 Sauvegarde</button>
+    <button class="menu-item" data-act="restaurer">♻️ Restauration</button>
+    <button class="menu-item" data-act="corbeilleView">🗑️ Corbeille</button>
+    <button class="menu-item" data-act="closeMenu">Fermer</button>
+  </aside>
+</div>
+<input type="file" id="fichier-restore" accept=".json,application/json" hidden>
+
 <div id="modal" class="modal"></div>
+<div id="confirm" class="modal"></div>
 <div id="toast" class="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -139,7 +170,7 @@ const db = firebase.database();
 
 /* ---------- Utilitaires ---------- */
 const MOIS_NOMS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-const TITRES = {home:'Nostra CoPilot', depenses:'💸 Dépenses', influence:'🤝 Influence', artemis:'🧾 Artemis DL'};
+const TITRES = {home:'Nostra CoPilot', depenses:'💸 Dépenses', influence:'🤝 Influence', artemis:'🧾 Artemis DL', corbeille:'🗑️ Corbeille'};
 const pad = n => String(n).padStart(2,'0');
 const moisCourant = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}`; };
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
@@ -155,9 +186,11 @@ function toast(msg){ const t = document.getElementById('toast'); t.textContent =
 /* ---------- État ---------- */
 const state = { user:null, loaded:false, view:'home', mois:moisCourant(), data:normaliser(null) };
 let listening = false;
+/* Filtres mémorisés pendant la session */
+const filtres = { depenses:{q:'', payeur:'tous', type:'tous'}, influence:{q:'', statut:'tous'} };
 function normaliser(v){
   v = v || {};
-  return { chargesFixes: v.chargesFixes||{}, depenses: v.depenses||{}, influence: v.influence||{}, artemis: v.artemis||{} };
+  return { chargesFixes: v.chargesFixes||{}, depenses: v.depenses||{}, influence: v.influence||{}, artemis: v.artemis||{}, corbeille: v.corbeille||{} };
 }
 /* Écriture groupée à partir de la racine "nostra" */
 const maj = obj => db.ref('nostra').update(obj);
@@ -227,15 +260,16 @@ function render(){
   const connecte = !!state.user;
   document.getElementById('tabbar').hidden = !connecte;
   document.getElementById('logout').hidden = !connecte;
+  document.getElementById('menu').hidden = !connecte;
   document.getElementById('back').hidden = !connecte || state.view === 'home';
   document.getElementById('title').textContent = TITRES[state.view] || 'Nostra CoPilot';
   const main = document.getElementById('main');
-  if (!connecte){ main.innerHTML = viewLogin(); return; }
+  if (!connecte){ document.getElementById('drawer').hidden = true; main.innerHTML = viewLogin(); return; }
   if (!state.loaded){ main.innerHTML = '<p class="empty">Chargement…</p>'; return; }
   main.innerHTML = VIEWS[state.view]();
   document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.id === state.view));
 }
-const VIEWS = { home:()=>viewHome(), depenses:()=>viewDepenses(), influence:()=>viewInfluence(), artemis:()=>viewArtemis() };
+const VIEWS = { home:()=>viewHome(), depenses:()=>viewDepenses(), influence:()=>viewInfluence(), artemis:()=>viewArtemis(), corbeille:()=>viewCorbeille() };
 
 function viewLogin(){
   return `<div class="card login"><div class="logo">🧭</div><h2 class="hello">Nostra CoPilot</h2>
@@ -300,6 +334,54 @@ function tableauAnnuel(m, cols){
   </table></div></div>`;
 }
 
+/* ---------- Filtres (Dépenses et Influence) ---------- */
+function opt(valeur, libelle, actuelle){
+  return `<option value="${valeur}" ${String(valeur)===String(actuelle)?'selected':''}>${libelle}</option>`;
+}
+function barreFiltres(sec){
+  if (sec === 'depenses'){
+    const f = filtres.depenses;
+    return `<div class="card filtres">
+      <input type="search" placeholder="Rechercher une dépense…" data-filtre="depenses.q" value="${esc(f.q)}">
+      <div class="row2">
+        <select data-filtre="depenses.payeur">
+          ${opt('tous','Tous les payeurs',f.payeur)}${opt('A','Amine',f.payeur)}${opt('M','Myriam',f.payeur)}
+        </select>
+        <select data-filtre="depenses.type">
+          ${opt('tous','Toutes',f.type)}${opt('fixe','Fixes',f.type)}${opt('extra','Ponctuelles',f.type)}
+        </select>
+      </div>
+    </div>`;
+  }
+  const f = filtres.influence;
+  return `<div class="card filtres">
+    <input type="search" placeholder="Rechercher un projet…" data-filtre="influence.q" value="${esc(f.q)}">
+    <select data-filtre="influence.statut">
+      ${opt('tous','Tous les projets',f.statut)}${opt('paye','Payés',f.statut)}${opt('nonpaye','Non payés',f.statut)}
+    </select>
+  </div>`;
+}
+/* Rafraîchit seulement la zone de liste, pour ne pas perdre le focus de la recherche */
+function rafraichirZone(sec){
+  const z = document.getElementById('zone-' + sec);
+  if (z) z.innerHTML = sec === 'depenses' ? zoneDepenses() : zoneInfluence();
+}
+['input','change'].forEach(ev => document.addEventListener(ev, e => {
+  const cle = e.target.dataset && e.target.dataset.filtre;
+  if (!cle) return;
+  const [sec, champ] = cle.split('.');
+  filtres[sec][champ] = e.target.value;
+  rafraichirZone(sec);
+}));
+
+/* Boutons d'export */
+function barreExport(src){
+  return `<div class="export-bar">
+    <button class="btn-export" data-act="exportCsv" data-src="${src}">⬇ Export CSV</button>
+    <button class="btn-export" data-act="exportPdf" data-src="${src}">🖨 Export PDF</button>
+  </div>`;
+}
+
 /* Onglet 1 : Dépenses */
 function rowDep(d){
   const ds = `data-act="editDep" data-id="${esc(d.id)}" data-kind="${d.kind}"`;
@@ -310,26 +392,42 @@ function rowDep(d){
     <button class="x" data-act="delDep" data-id="${esc(d.id)}" data-kind="${d.kind}" aria-label="Supprimer">✕</button>
   </div>`;
 }
-function viewDepenses(){
-  const m = state.mois;
-  const fixes = listFixes().map(f => { const v = valeurFixe(f.id, m); return {id:f.id, nom:f.nom, montant:v.montant, payeur:v.payeur, kind:'fixe'}; });
-  const extras = listExtras(m).map(e => ({id:e.id, nom:e.nom, montant:e.montant, payeur:e.payeur, kind:'extra'}));
-  return monthNav(m) + `
-  <div class="card">
+function zoneDepenses(){
+  const m = state.mois, f = filtres.depenses, q = f.q.trim().toLowerCase();
+  const actif = !!q || f.payeur !== 'tous' || f.type !== 'tous';
+  const ok = d => (!q || String(d.nom||'').toLowerCase().includes(q))
+    && (f.payeur === 'tous' || d.payeur === f.payeur)
+    && (f.type === 'tous' || (f.type === 'fixe') === (d.kind === 'fixe'));
+  const fixes = listFixes().map(x => { const v = valeurFixe(x.id, m); return {id:x.id, nom:x.nom, montant:v.montant, payeur:v.payeur, kind:'fixe'}; }).filter(ok);
+  const extras = listExtras(m).map(e => ({id:e.id, nom:e.nom, montant:e.montant, payeur:e.payeur, kind:'extra'})).filter(ok);
+  const total = [...fixes, ...extras].reduce((s,d) => s + (Number(d.montant)||0), 0);
+  const vide = fixes.length + extras.length === 0 && actif ? '<p class="empty">Aucune dépense ne correspond.</p>' : '';
+  return `<div class="card">
     <div class="grid-head dep"><span>Nom de la dépense</span><span>Montant</span><span></span></div>
     ${fixes.map(rowDep).join('')}
     ${extras.map(rowDep).join('')}
+    ${vide}
     <button class="add-line" data-act="addFixe">＋ Ajouter une charge fixe</button>
   </div>
-  <div class="total"><span>Total ${labelMois(m)}</span><strong>${fmt(totalDepenses(m))}</strong></div>
-  ${tableauAnnuel(m, [{label:'Dépenses', fn:k => totalDepenses(k)}])}
-  ${fab('addDep')}`;
+  <div class="total"><span>${actif ? 'Total affiché' : 'Total ' + labelMois(m)}</span><strong>${fmt(total)}</strong></div>`;
+}
+function viewDepenses(){
+  const m = state.mois;
+  return monthNav(m) + barreFiltres('depenses') + `<div id="zone-depenses">${zoneDepenses()}</div>`
+    + barreExport('depenses')
+    + tableauAnnuel(m, [{label:'Dépenses', fn:k => totalDepenses(k)}])
+    + fab('addDep');
 }
 
 /* Onglet 2 : Influence */
-function viewInfluence(){
-  const m = state.mois;
-  const items = listInfl(m);
+function zoneInfluence(){
+  const m = state.mois, f = filtres.influence, q = f.q.trim().toLowerCase();
+  const actif = !!q || f.statut !== 'tous';
+  const items = listInfl(m).filter(i => {
+    const paye = Number(i.montant) > 0 && Number(i.verse) >= Number(i.montant);
+    return (!q || String(i.projet||'').toLowerCase().includes(q))
+      && (f.statut === 'tous' || (f.statut === 'paye') === paye);
+  });
   const rows = items.map(i => {
     const paid = Number(i.montant) > 0 && Number(i.verse) >= Number(i.montant);
     const ds = `data-act="editInfl" data-id="${esc(i.id)}"`;
@@ -340,23 +438,27 @@ function viewInfluence(){
       <div class="cell-amt reste ${paid?'zero':''}" ${ds}>${fmt(resteInfl(i))}</div>
       <button class="x" data-act="delInfl" data-id="${esc(i.id)}" aria-label="Supprimer">✕</button>
     </div>`;
-  }).join('') || '<p class="empty">Aucun projet pour ce mois-ci.</p>';
+  }).join('') || `<p class="empty">${actif ? 'Aucun projet ne correspond.' : 'Aucun projet pour ce mois-ci.'}</p>`;
   const totalMontant = items.reduce((s,i) => s + (Number(i.montant)||0), 0);
   const totalReste = items.reduce((s,i) => s + resteInfl(i), 0);
   const totalPaye = totalMontant - totalReste;
-  return monthNav(m) + `
-  <div class="card">
+  return `<div class="card">
     <div class="grid-head infl"><span>Projet</span><span>Montant</span><span>Payé</span><span>Reste</span><span></span></div>
     ${rows}
   </div>
     <div class="total"><span>Reste à payer</span><strong>${fmt(totalReste)}</strong></div>
   <div class="total" style="background:#334155"><span>Montant total payé</span><strong>${fmt(totalPaye)}</strong></div>
-  <div class="total" style="background:#334155"><span>Montant total</span><strong>${fmt(totalPaye + totalReste)}</strong></div>
-  ${tableauAnnuel(m, [
-    {label:'Montant', fn:k => listInfl(k).reduce((s,i) => s + (Number(i.montant)||0), 0)},
-    {label:'Reste', fn:k => listInfl(k).reduce((s,i) => s + resteInfl(i), 0)}
-  ])}
-  ${fab('addInfl')}`;
+  <div class="total" style="background:#334155"><span>Montant total</span><strong>${fmt(totalPaye + totalReste)}</strong></div>`;
+}
+function viewInfluence(){
+  const m = state.mois;
+  return monthNav(m) + barreFiltres('influence') + `<div id="zone-influence">${zoneInfluence()}</div>`
+    + barreExport('influence')
+    + tableauAnnuel(m, [
+      {label:'Montant', fn:k => listInfl(k).reduce((s,i) => s + (Number(i.montant)||0), 0)},
+      {label:'Reste', fn:k => listInfl(k).reduce((s,i) => s + resteInfl(i), 0)}
+    ])
+    + fab('addInfl');
 }
 
 /* Onglet 3 : Artemis DL */
@@ -388,6 +490,30 @@ function viewArtemis(){
   <div class="total" style="background:#334155"><span>Total facturé HT (factures envoyées)</span><strong>${fmt(htEnvoye)}</strong></div>
   ${cards}
   ${fab('addArt')}`;
+}
+
+/* Corbeille : éléments supprimés, restaurables sans limite de temps */
+function libelleCorbeille(c){
+  switch (c.type){
+    case 'extra': return `Dépense : ${c.data?.nom||''} (${labelMois(c.mois)})`;
+    case 'fixe': return `Charge fixe : ${c.data?.nom||''}`;
+    case 'projet': return `Projet : ${c.data?.projet||''} (${labelMois(c.mois)})`;
+    case 'facture': return `Facture : ${c.data?.client||'Sans nom'} ${c.data?.numero||''}`;
+    default: return 'Élément supprimé';
+  }
+}
+function viewCorbeille(){
+  const items = Object.entries(state.data.corbeille||{})
+    .map(([cle,v]) => ({...v, cle}))
+    .sort((a,b) => (b.supprimeLe||0) - (a.supprimeLe||0));
+  if (!items.length) return '<p class="empty">La corbeille est vide.</p>';
+  return items.map(c => `<div class="inv">
+    <div><strong>${esc(libelleCorbeille(c))}</strong><small>Supprimé le ${new Date(c.supprimeLe||0).toLocaleDateString('fr-FR')}</small></div>
+    <div class="chips" style="margin-top:10px">
+      <button class="chip on" data-act="restaurerCorbeille" data-id="${esc(c.cle)}">↩ Restaurer</button>
+      <button class="chip" style="color:var(--red)" data-act="purgerCorbeille" data-id="${esc(c.cle)}">Supprimer définitivement</button>
+    </div>
+  </div>`).join('');
 }
 
 /* ---------- Formulaires (fenêtre modale) ---------- */
@@ -422,7 +548,7 @@ function openForm(cfg){
     <form id="f" novalidate>
       ${cfg.fields.map(fieldHtml).join('')}
       <button class="btn-primary" type="submit">${esc(cfg.submit || 'Enregistrer')}</button>
-      ${cfg.onDelete ? '<button type="button" class="btn-danger" data-act="formDelete">Supprimer</button>' : ''}
+      ${cfg.onDelete ? '<button type="button" class="btn-danger" data-act="formDelete">Mettre à la corbeille</button>' : ''}
     </form></div>`;
   modal.classList.add('open');
   modal.querySelectorAll('.payeur-group').forEach(g => g.addEventListener('click', ev => {
@@ -450,6 +576,23 @@ function submitForm(){
   if (!ok){ toast('Merci de remplir les champs obligatoires'); return; }
   cfg.onSubmit(vals);
   closeModal();
+}
+
+/* Confirmation dans l'application, sans limite de temps */
+let confirmCb = null;
+function askConfirm(msg, onOk, label){
+  confirmCb = onOk;
+  document.getElementById('confirm').innerHTML = `<div class="sheet" role="dialog">
+    <div class="sheet-head"><h2>Confirmer</h2></div>
+    <p class="confirm-msg">${esc(msg)}</p>
+    <button class="btn-danger" data-act="confirmOk">${esc(label || 'Confirmer')}</button>
+    <button class="btn-cancel" data-act="confirmNo">Annuler</button>
+  </div>`;
+  document.getElementById('confirm').classList.add('open');
+}
+function closeConfirm(){
+  document.getElementById('confirm').classList.remove('open');
+  confirmCb = null;
 }
 
 /* Dépense ponctuelle (Dépenses) */
@@ -511,19 +654,31 @@ function formFixeNouvelle(){
     }
   });
 }
+
+/* Suppressions : l'entrée part dans la corbeille (confirmation faite avant l'appel) */
+function supprVersCorbeille(entree, updates){
+  const key = db.ref('nostra/corbeille').push().key;
+  updates[`corbeille/${key}`] = {...entree, supprimeLe: Date.now()};
+  maj(updates);
+}
 function supprFixe(k){
-  if (!confirm('Supprimer cette charge fixe de tous les mois ?')) return;
+  const f = state.data.chargesFixes[k];
+  if (!f) return;
   const up = {[`chargesFixes/${k}`]: null};
+  const valeurs = {};
   Object.keys(state.data.depenses).forEach(mm => {
-    if (state.data.depenses[mm]?.fixes?.[k] !== undefined) up[`depenses/${mm}/fixes/${k}`] = null;
+    const v = state.data.depenses[mm]?.fixes?.[k];
+    if (v !== undefined){ valeurs[mm] = {...v}; up[`depenses/${mm}/fixes/${k}`] = null; }
   });
-  maj(up);
-  toast('Charge fixe supprimée');
+  supprVersCorbeille({type:'fixe', id:k, data:{...f}, valeurs}, up);
+  toast('Charge fixe mise à la corbeille');
 }
 function supprExtra(id){
-  if (!confirm('Supprimer cette dépense ?')) return;
-  maj({[`depenses/${state.mois}/extras/${id}`]: null});
-  toast('Dépense supprimée');
+  const m = state.mois;
+  const e = state.data.depenses[m]?.extras?.[id];
+  if (!e) return;
+  supprVersCorbeille({type:'extra', mois:m, id, data:{...e}}, {[`depenses/${m}/extras/${id}`]: null});
+  toast('Dépense mise à la corbeille');
 }
 
 /* Projet Influence */
@@ -566,9 +721,11 @@ function toggleInfl(id){
   }
 }
 function supprInfl(id){
-  if (!confirm('Supprimer ce projet ?')) return;
-  maj({[`influence/${state.mois}/${id}`]: null});
-  toast('Projet supprimé');
+  const m = state.mois;
+  const i = state.data.influence[m]?.[id];
+  if (!i) return;
+  supprVersCorbeille({type:'projet', mois:m, id, data:{...i}}, {[`influence/${m}/${id}`]: null});
+  toast('Projet mis à la corbeille');
 }
 
 /* Facture Artemis DL */
@@ -606,9 +763,174 @@ function toggleArt(id, champ){
   maj({[`artemis/${id}/${champ}`]: !a[champ]});
 }
 function supprArt(id){
-  if (!confirm('Supprimer cette facture ?')) return;
-  maj({[`artemis/${id}`]: null});
-  toast('Facture supprimée');
+  const a = state.data.artemis[id];
+  if (!a) return;
+  supprVersCorbeille({type:'facture', id, data:{...a}}, {[`artemis/${id}`]: null});
+  toast('Facture mise à la corbeille');
+}
+
+/* Corbeille : restaurer ou supprimer définitivement */
+function restaurerCorbeille(id){
+  const c = state.data.corbeille[id];
+  if (!c) return;
+  const up = {[`corbeille/${id}`]: null};
+  if (c.type === 'extra') up[`depenses/${c.mois}/extras/${c.id}`] = c.data;
+  else if (c.type === 'fixe'){
+    up[`chargesFixes/${c.id}`] = c.data;
+    Object.entries(c.valeurs||{}).forEach(([mm, v]) => { up[`depenses/${mm}/fixes/${c.id}`] = v; });
+  }
+  else if (c.type === 'projet') up[`influence/${c.mois}/${c.id}`] = c.data;
+  else if (c.type === 'facture') up[`artemis/${c.id}`] = c.data;
+  maj(up);
+  toast('Élément restauré');
+}
+function purgerCorbeille(id){
+  askConfirm('Supprimer définitivement cet élément ? Cette action est irréversible.', () => {
+    maj({[`corbeille/${id}`]: null});
+    toast('Supprimé définitivement');
+  }, 'Supprimer définitivement');
+}
+
+/* ---------- Sauvegarde, restauration, export ---------- */
+function telecharger(contenu, nom, type){
+  const blob = new Blob([contenu], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nom;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+/* Télécharge toute la racine "nostra" */
+function sauvegarder(){
+  return db.ref('nostra').once('value').then(snap => {
+    telecharger(JSON.stringify(snap.val() || {}, null, 2), `sauvegarde-${today()}.json`, 'application/json');
+    toast('Sauvegarde téléchargée');
+  });
+}
+/* Lit un fichier, vérifie son contenu, demande deux confirmations, puis remplace tout */
+document.getElementById('fichier-restore').addEventListener('change', e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try { data = JSON.parse(reader.result); } catch (err) { toast('Fichier invalide'); return; }
+    const cles = ['chargesFixes','depenses','influence','artemis','corbeille'];
+    if (!data || typeof data !== 'object' || !cles.some(k => k in data)){
+      toast('Ce fichier ne ressemble pas à une sauvegarde Nostra');
+      return;
+    }
+    const nb = o => Object.keys(o||{}).length;
+    const dep = Object.values(data.depenses||{}).reduce((s,mo) => s + Object.keys(mo?.extras||{}).length, 0);
+    const proj = Object.values(data.influence||{}).reduce((s,mo) => s + Object.keys(mo||{}).length, 0);
+    askConfirm(`Restaurer cette sauvegarde ? Elle remplacera TOUTES les données actuelles (${nb(data.chargesFixes)} charges fixes, ${dep} dépenses ponctuelles, ${proj} projets, ${nb(data.artemis)} factures). Une sauvegarde de sécurité sera téléchargée d'abord.`, () => {
+      const mot = prompt('Pour confirmer, tapez RESTAURER en majuscules :');
+      if (mot !== 'RESTAURER'){ toast('Restauration annulée'); return; }
+      sauvegarder()
+        .then(() => db.ref('nostra').set(data))
+        .then(() => toast('Données restaurées'))
+        .catch(() => toast('Échec de la restauration'));
+    }, 'Continuer');
+  };
+  reader.readAsText(file);
+});
+
+/* Données d'export : mois affiché (non filtré) et bilan annuel jusqu'au mois en cours */
+function donneesExport(src){
+  const m = state.mois, y = m.slice(0,4), cur = moisCourant();
+  const mois12 = [];
+  for (let i = 1; i <= 12; i++){
+    const k = `${y}-${pad(i)}`;
+    if (k <= cur) mois12.push({k, nom: MOIS_NOMS[i-1]});
+  }
+  const payeurNom = p => p === 'A' ? 'Amine' : p === 'M' ? 'Myriam' : '';
+  if (src === 'depenses'){
+    const lignes = [
+      ...listFixes().map(f => { const v = valeurFixe(f.id, m); return [f.nom, 'Fixe', payeurNom(v.payeur), v.montant]; }),
+      ...listExtras(m).map(e => [e.nom||'', 'Ponctuelle', payeurNom(e.payeur), Number(e.montant)||0])
+    ];
+    return {
+      titre: 'Dépenses', periode: labelMois(m),
+      colonnes: ['Nom','Type','Payeur','Montant (DT)'],
+      lignes,
+      total: ['Total','','', totalDepenses(m)],
+      annee: {
+        titre: `Bilan ${y}`,
+        colonnes: ['Mois','Dépenses (DT)'],
+        lignes: mois12.map(x => [x.nom, totalDepenses(x.k)]),
+        total: ['Total', mois12.reduce((s,x) => s + totalDepenses(x.k), 0)]
+      }
+    };
+  }
+  const items = listInfl(m);
+  const estPaye = i => Number(i.montant) > 0 && Number(i.verse) >= Number(i.montant);
+  const sumM = k => listInfl(k).reduce((s,i) => s + (Number(i.montant)||0), 0);
+  const sumR = k => listInfl(k).reduce((s,i) => s + resteInfl(i), 0);
+  return {
+    titre: 'Influence', periode: labelMois(m),
+    colonnes: ['Projet','Montant (DT)','Déjà payé (DT)','Reste (DT)','Statut'],
+    lignes: items.map(i => [i.projet||'', Number(i.montant)||0, Number(i.verse)||0, resteInfl(i), estPaye(i) ? 'Payé' : 'Non payé']),
+    total: ['Total', sumM(m), items.reduce((s,i) => s + (Number(i.verse)||0), 0), sumR(m), ''],
+    annee: {
+      titre: `Bilan ${y}`,
+      colonnes: ['Mois','Montant (DT)','Reste (DT)'],
+      lignes: mois12.map(x => [x.nom, sumM(x.k), sumR(x.k)]),
+      total: ['Total', mois12.reduce((s,x) => s + sumM(x.k), 0), mois12.reduce((s,x) => s + sumR(x.k), 0)]
+    }
+  };
+}
+/* CSV : séparateur ;, UTF-8 avec BOM pour qu'Excel affiche bien les accents */
+function ligneCsv(arr){
+  return arr.map(v => {
+    if (typeof v === 'number') return String(Math.round(v*1000)/1000).replace('.',',');
+    return `"${String(v ?? '').replace(/"/g,'""')}"`;
+  }).join(';');
+}
+function exportCsv(src){
+  const d = donneesExport(src);
+  const L = [
+    ligneCsv([`${d.titre} - ${d.periode}`]),
+    ligneCsv(d.colonnes),
+    ...d.lignes.map(l => ligneCsv(l)),
+    ligneCsv(d.total),
+    '',
+    ligneCsv([d.annee.titre]),
+    ligneCsv(d.annee.colonnes),
+    ...d.annee.lignes.map(l => ligneCsv(l)),
+    ligneCsv(d.annee.total)
+  ];
+  telecharger('\uFEFF' + L.join('\r\n'), `${src}-${state.mois}.csv`, 'text/csv;charset=utf-8');
+  toast('Export CSV prêt');
+}
+/* PDF : page imprimable ouverte dans un nouvel onglet, puis impression */
+function tablePdf(cols, lignes, total){
+  const cell = v => typeof v === 'number' ? `<td class="n">${fmt(v)}</td>` : `<td>${esc(v)}</td>`;
+  const th = v => typeof v === 'number' ? `<th class="n">${fmt(v)}</th>` : `<th>${esc(v)}</th>`;
+  return `<table><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>
+    <tbody>${lignes.map(l => `<tr>${l.map(v => cell(v)).join('')}</tr>`).join('')}</tbody>
+    <tfoot><tr>${total.map(v => th(v)).join('')}</tr></tfoot></table>`;
+}
+function exportPdf(src){
+  const d = donneesExport(src);
+  const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+  <title>${esc(d.titre)} ${esc(d.periode)}</title>
+  <style>body{font-family:Arial,sans-serif;margin:24px;color:#111}h1{font-size:20px;margin:0 0 12px}h2{font-size:16px;margin:24px 0 8px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #ddd;padding:6px;text-align:left}th{background:#f3f4f6}.n{text-align:right}tfoot th{border-top:2px solid #333}@media print{body{margin:12mm}}</style>
+  </head><body>
+  <h1>${esc(d.titre)} - ${esc(d.periode)}</h1>
+  ${tablePdf(d.colonnes, d.lignes, d.total)}
+  <h2>${esc(d.annee.titre)}</h2>
+  ${tablePdf(d.annee.colonnes, d.annee.lignes, d.annee.total)}
+  </body></html>`;
+  const w = window.open('', '_blank');
+  if (!w){ toast('Autorisez les fenêtres pop-up pour imprimer'); return; }
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => w.print(), 400);
 }
 
 /* ---------- Actions (clics) ---------- */
@@ -618,19 +940,47 @@ const actions = {
   mois: ds => { state.mois = decalerMois(state.mois, +ds.d); render(); },
   logout: () => auth.signOut(),
   closeModal: () => closeModal(),
-  formDelete: () => { const c = currentForm; closeModal(); c?.onDelete?.(); },
+  formDelete: () => {
+    const c = currentForm;
+    closeModal();
+    if (c?.onDelete) askConfirm('Mettre cette entrée à la corbeille ?', () => c.onDelete(), 'Mettre à la corbeille');
+  },
   addDep: () => formDepense(null),
   editDep: ds => ds.kind === 'fixe' ? formFixe(ds.id) : formDepense(ds.id),
-  delDep: ds => ds.kind === 'fixe' ? supprFixe(ds.id) : supprExtra(ds.id),
+  delDep: ds => {
+    const id = ds.id, kind = ds.kind;
+    askConfirm(kind === 'fixe' ? 'Mettre cette charge fixe à la corbeille ? Elle sera retirée de tous les mois.' : 'Mettre cette dépense à la corbeille ?',
+      () => kind === 'fixe' ? supprFixe(id) : supprExtra(id), 'Mettre à la corbeille');
+  },
   addFixe: () => formFixeNouvelle(),
   addInfl: () => formInfl(null),
   editInfl: ds => formInfl(ds.id),
-  delInfl: ds => supprInfl(ds.id),
+  delInfl: ds => {
+    const id = ds.id;
+    askConfirm('Mettre ce projet à la corbeille ?', () => supprInfl(id), 'Mettre à la corbeille');
+  },
   toggleInfl: ds => toggleInfl(ds.id),
   addArt: () => formArt(null),
   editArt: ds => formArt(ds.id),
-  delArt: ds => supprArt(ds.id),
-  toggleArt: ds => toggleArt(ds.id, ds.champ)
+  delArt: ds => {
+    const id = ds.id;
+    askConfirm('Mettre cette facture à la corbeille ?', () => supprArt(id), 'Mettre à la corbeille');
+  },
+  toggleArt: ds => toggleArt(ds.id, ds.champ),
+  /* Menu latéral */
+  openMenu: () => { document.getElementById('drawer').hidden = false; },
+  closeMenu: () => { document.getElementById('drawer').hidden = true; },
+  sauvegarde: () => { actions.closeMenu(); sauvegarder().catch(() => toast('Sauvegarde impossible. Vérifiez votre connexion.')); },
+  restaurer: () => { actions.closeMenu(); document.getElementById('fichier-restore').click(); },
+  corbeilleView: () => { actions.closeMenu(); state.view = 'corbeille'; window.scrollTo(0,0); render(); },
+  restaurerCorbeille: ds => restaurerCorbeille(ds.id),
+  purgerCorbeille: ds => purgerCorbeille(ds.id),
+  /* Confirmation */
+  confirmOk: () => { const cb = confirmCb; closeConfirm(); if (cb) cb(); },
+  confirmNo: () => closeConfirm(),
+  /* Export */
+  exportCsv: ds => exportCsv(ds.src),
+  exportPdf: ds => exportPdf(ds.src)
 };
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
