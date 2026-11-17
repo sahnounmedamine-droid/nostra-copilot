@@ -287,7 +287,13 @@ function tableauAnnuel(m, cols){
     vals.forEach((v,j) => { if (v !== null) sums[j] += v; });
     lignes.push(`<tr class="${k===m?'cur':''}"><td>${MOIS_NOMS[i-1]}</td>${vals.map(v => `<td>${v===null?'—':fmt(v)}</td>`).join('')}</tr>`);
   }
-  return `<div class="card"><h3>Bilan ${y}</h3><div class="table-wrap"><table class="ann">
+  return `<div class="card">
+    <div class="month-nav" style="margin-bottom:10px">
+      <button class="ib dark" data-act="mois" data-d="-12" aria-label="Année précédente">‹</button>
+      <strong>Bilan ${y}</strong>
+      <button class="ib dark" data-act="mois" data-d="12" aria-label="Année suivante">›</button>
+    </div>
+    <div class="table-wrap"><table class="ann">
     <thead><tr><th>Mois</th>${cols.map(c => `<th>${c.label}</th>`).join('')}</tr></thead>
     <tbody>${lignes.join('')}</tbody>
     <tfoot><tr><th>Total</th>${sums.map(s => `<th>${fmt(s)}</th>`).join('')}</tr></tfoot>
